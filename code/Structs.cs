@@ -3,3 +3,5 @@ struct Composition {
   public double sigmaA;
   public double nuSigmaF;
 }
+
+enum Boundary { Left, Right }
