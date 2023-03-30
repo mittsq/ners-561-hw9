@@ -1,8 +1,5 @@
 ﻿#region Constants
 using MathNet.Numerics.LinearAlgebra;
-
-const int LEFT = 0;
-const int RIGHT = 1;
 #endregion
 
 #region Inputs
@@ -45,10 +42,10 @@ var fConverge = double.Parse(split[1]);
 #region Getters
 var getParam = (int i) => comp[assignments[i / m]];
 var dTilde = (int i) => 1 / (dh / (2 * getParam(i).d) + dh / (2 * getParam(i + 1).d));
-var dTildeBounds = (int i, int a) => 1 / (dh / (2 * getParam(i).d) + 1 / alpha[a]);
+var dTildeBounds = (int i, Boundary a) => 1 / (dh / (2 * getParam(i).d) + 1 / alpha[(int)a]);
 #endregion
 
-var phi = Enumerable.Repeat(1d, n).ToArray();
+var phi = Vector<double>.Build.DenseOfEnumerable(Enumerable.Repeat(1d, n));
 var lambda = 1d;
 
 #region Mesh Balance Equations
@@ -64,15 +61,15 @@ for (var i = 0; i < n; ++i) {
     // left boundary
 
     var c1 = -dTilde(i);
-    b[i] = getParam(i).sigmaA * dh + dTildeBounds(i, LEFT) - c1;
-    c[i + 1] = c1;
+    b[i] = getParam(i).sigmaA * dh + dTildeBounds(i, Boundary.Left) - c1;
+    c[i] = c1;
 
   } else if (i == n - 1) {
     // right boundary
 
     var an = -dTilde(i - 1);
-    b[i] = getParam(i).sigmaA * dh + dTildeBounds(i, RIGHT) - an;
-    a[i - 1] = an;
+    b[i] = getParam(i).sigmaA * dh + dTildeBounds(i, Boundary.Right) - an;
+    a[i] = an;
 
   } else {
     // everything else
@@ -81,82 +78,45 @@ for (var i = 0; i < n; ++i) {
     var ci = -dTilde(i);
 
     b[i] = getParam(i).sigmaA * dh - ai - ci;
-    a[i - 1] = ai;
-    c[i + 1] = ci;
+    a[i] = ai;
+    c[i] = ci;
   }
 }
 #endregion
 
 var bigF = Matrix<double>.Build.SparseOfDiagonalArray(d);
+var bigM = Matrix<double>.Build.Sparse(n, n);
 
-while (true) {
-  #region Inner Iteration
-  var phiV = Vector<double>.Build.DenseOfArray(phi);
+for (var i = 0; i < n; ++i) {
+  bigM[i, i] = b[i];
 
-  #region LU Factorization
-  var aTilde = new double[n];
-  var bTilde = new double[n];
-  var cTilde = new double[n];
-
-  bTilde[0] = b[0];
-
-  for (var i = 1; i < n; ++i) {
-    aTilde[i - 1] = a[i - 1] / bTilde[i - 1];
-    bTilde[i] = b[i] - aTilde[i] * c[i];
+  if (i != 0 && i != n - 1) {
+    bigM[i, i - 1] = a[i];
+    bigM[i, i + 1] = c[i];
   }
+}
 
-  var psi = (lambda * (bigF * phiV)).ToArray();
-  #endregion
+for (var l = 0; ; ++l) {
+  var newPhi = lambda * (bigM.Inverse() * bigF) * phi;
+  var newLambda = lambda * newPhi.DotProduct(phi) / newPhi.DotProduct(newPhi);
 
-  #region Forward Elimination
-  var y = new double[n];
-
-  for (var i = 0; i < n; ++i) {
-    y[i] = psi[i];
-
-    if (i != 0) {
-      y[i] += aTilde[i - 1] * y[i - 1];
-    }
-  }
-  #endregion
-
-  #region Backward Substitution
-  var newPhi = new double[n];
-
-  for (var i = n - 1; i >= 0; --i) {
-    var invB = 1 / bTilde[i];
-    newPhi[i] = y[i] * invB;
-
-    if (i != n - 1) {
-      newPhi[i] -= cTilde[i + 1] * newPhi[i + 1] * invB;
-    }
-  }
-  #endregion
-
-  var newPhiV = Vector<double>.Build.DenseOfArray(newPhi);
-  var newLambda = lambda * newPhiV.DotProduct(phiV) / newPhiV.DotProduct(newPhiV);
-  var newK = 1 / newLambda;
-
-  // loop, terminate if converged
-  var converged = Math.Abs(newK - 1 / lambda) < kConverge;
+  var kDiff = Math.Abs(newLambda.Flip() - lambda.Flip());
   var infNorm = newPhi.Zip(phi, (a, b) => Math.Abs(a - b)).Max();
-  converged &= infNorm < fConverge;
 
-  Console.WriteLine($"{newK:f6}\t{infNorm:f6}");
-  if (converged) {
-    Console.WriteLine();
-    
-    for (var i = 0; i < n; ++i) {
-      Console.WriteLine($"{newPhi[i]:f6}");
-    }
+  Console.WriteLine($"kDiff = {kDiff,10:F7}, infNorm = {infNorm,10:F6}");
 
+  if (kDiff < kConverge && infNorm < fConverge) {
+    Console.WriteLine($"\nConverged after {l} iterations.");
+    Console.WriteLine($"k = {newLambda.Flip():F5}");
+
+    var i = 0;
+    var phiString = phi.Aggregate(string.Empty, (a, b) => a + $"{i++}\t{b:F6}\n");
+    File.WriteAllText(@"G:\My Drive\WN23\561 Core Des\HW\9\phi.txt", phiString);
     break;
   }
 
-  lambda = newLambda;
   phi = newPhi;
-
-  #endregion
+  lambda = newLambda;
 }
 
 #region Output
