@@ -1,7 +1,7 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
 
 #region Inputs
-var input = File.ReadAllLines(@"G:\My Drive\WN23\561 Core Des\HW\9\input.txt");
+var input = File.ReadAllLines(@"G:\My Drive\WN23\561 Core Des\HW\9\input-360.txt");
 
 var h = double.Parse(input[0]);
 
@@ -147,13 +147,13 @@ for (var l = 0; ; ++l) {
     var phiNorm = newPhi.Sum();
     var phiString = newPhi.Aggregate("", (a, b) => a + $"{dh * i++}\t{b / phiNorm:F6}\n");
     phiString += $"{dh * i}\t0\n";
-    File.WriteAllText(@"G:\My Drive\WN23\561 Core Des\HW\9\phi.txt", phiString);
+    File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\phi-{h}.txt", phiString);
 
     i = 0;
     var sourceNorm = d.Sum();
     var sourceString = d.Aggregate("", (a, b) => a + $"{dh * i++}\t{b / sourceNorm:F6}\n");
     sourceString += $"{dh * i}\t0\n";
-    File.WriteAllText(@"G:\My Drive\WN23\561 Core Des\HW\9\source.txt", sourceString);
+    File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\source-{h}.txt", sourceString);
     #endregion
 
     break;

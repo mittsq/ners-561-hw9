@@ -171,7 +171,7 @@ the infinity norm -- that is, the maximum absolute difference
 among the elements of the vector -- for the latter. Results 
 are plotted below.
 
-\lstinputlisting{../input.txt}
+\lstinputlisting{../input-180.txt}
 
 The resulting eigenvalue is \(k = 0.87309\), with a dominance
 ratio \(\sigma = 0.96754\). This solution took 175 iterations
@@ -188,8 +188,38 @@ to converge.
       legend pos={outer north east},
       legend cell align={left}
     ]
-      \addplot[mark=none,const plot,solid] table {../phi.txt};
-      \addplot[mark=none,const plot,dotted] table {../source.txt};
+      \addplot[mark=none,const plot,solid] table {../phi-180.txt};
+      \addplot[mark=none,const plot,dotted] table {../source-180.txt};
+
+      \addlegendentry{Flux}
+      \addlegendentry{Fission Source}
+    \end{axis}
+  \end{tikzpicture}
+\end{center}
+
+\newpage 
+\section{Wielandt Shift}
+We first rerun the program unchanged, doubling the domain 
+size to \SI{360}{\centi\meter}. In this case, the eigenvalue
+is \(k = 0.93582\) and the dominance ratio is \(\sigma = 
+0.99650\). This time, the solution took 1790 iterations to 
+converge, an order of magnitude increase.
+
+\begin{center}
+  \begin{tikzpicture}[
+    trim axis left,
+    trim axis right,
+  ]
+    \begin{axis}[
+      xlabel={\(x\) {[\si{\centi\meter}]}},
+      ylabel={Normalized Value},
+      legend pos={outer north east},
+      legend cell align={left},
+      ymax={0.09999},
+      xtick distance={40},
+    ]
+      \addplot[mark=none,const plot,solid] table {../phi-360.txt};
+      \addplot[mark=none,const plot,dotted] table {../source-360.txt};
 
       \addlegendentry{Flux}
       \addlegendentry{Fission Source}
