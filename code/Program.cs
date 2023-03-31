@@ -1,6 +1,4 @@
-﻿#region Constants
-using MathNet.Numerics.LinearAlgebra;
-#endregion
+﻿using MathNet.Numerics.LinearAlgebra;
 
 #region Inputs
 var input = File.ReadAllLines(@"G:\My Drive\WN23\561 Core Des\HW\9\input.txt");
@@ -100,8 +98,8 @@ for (var l = 0; ; ++l) {
     aTilde[i] = a[i] / bTilde[i - 1];
     bTilde[i] = b[i] - aTilde[i] * c[i - 1];
   }
-
-  var psi = (lambda * (bigF * phi)).ToArray();
+  
+  var psi = (lambda * (bigF * phi));
   #endregion
 
   #region Forward Elimination
@@ -146,8 +144,16 @@ for (var l = 0; ; ++l) {
     Console.WriteLine($"k = {newK:f5}, dominance = {ratio:f8}");
 
     var i = 0;
-    var phiString = phi.Aggregate(string.Empty, (a, b) => a + $"{dh / 2 + dh * i++}\t{b:F6}\n");
+    var phiNorm = newPhi.Sum();
+    var phiString = newPhi.Aggregate("", (a, b) => a + $"{dh * i++}\t{b / phiNorm:F6}\n");
+    phiString += $"{dh * i}\t0\n";
     File.WriteAllText(@"G:\My Drive\WN23\561 Core Des\HW\9\phi.txt", phiString);
+
+    i = 0;
+    var sourceNorm = d.Sum();
+    var sourceString = d.Aggregate("", (a, b) => a + $"{dh * i++}\t{b / sourceNorm:F6}\n");
+    sourceString += $"{dh * i}\t0\n";
+    File.WriteAllText(@"G:\My Drive\WN23\561 Core Des\HW\9\source.txt", sourceString);
     #endregion
 
     break;

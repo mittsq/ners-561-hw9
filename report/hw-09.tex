@@ -1,0 +1,208 @@
+\documentclass[fleqn,11pt]{article}
+\usepackage[includeheadfoot,margin=0.5in,headheight=18pt]{geometry}
+\usepackage[english]{babel}
+% \usepackage{firamath-otf}
+% \usepackage{cmbright}
+% \usepackage[OT1]{fontenc}
+\usepackage[sfdefault]{notomath}
+\usepackage{calc}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage[version=4]{mhchem}
+\usepackage[sticky-per,print-unity-mantissa=false]{siunitx}
+\usepackage{cancel}
+\usepackage{contour}
+\usepackage{ulem}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{arydshln}
+\usepackage{pdfpages}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{wrapfig}
+\usepackage{makecell}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{circuitikz}
+\usepackage{tikzpagenodes}
+% \usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{parskip}
+\usepackage{setspace}
+\usepackage{cleveref}
+% \setoperatorfont\mathsf
+% \renewcommand*\familydefault{\sfdefault}
+
+\frenchspacing
+\renewcommand{\ULdepth}{1.8pt}
+\contourlength{0.8pt}
+
+\usetikzlibrary{positioning}
+\usepgfplotslibrary{external}
+% \tikzexternalize{}
+
+\pgfplotsset{compat=1.18}
+\def\axisdefaultwidth{5in}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  breakatwhitespace=false,
+  numbers=left,
+  keywordstyle=\pmb,
+  numberstyle=\tiny,
+  commentstyle=\itshape,
+  showstringspaces=false,
+}
+
+\renewcommand{\title}{Homework 9} % TODO change this
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  filecolor=magenta,      
+  urlcolor=cyan,
+  pdftitle={\title},
+  pdfpagemode=FullScreen,
+}
+
+\pagestyle{fancyplain}
+\lhead{\Large \textbf{\title}}
+\rhead{\large Sumit Basak}
+\lfoot{NERS 561}
+\cfoot{}
+\rfoot{Page \thepage~of~\pageref{LastPage}}
+
+\newcommand{\md}[2][d]{\ensuremath{\operatorname{#1}\!{#2}}}
+\newcommand{\mder}[3][d]{\frac{\md[#1]{#2}}{\md[#1]{#3}}}
+\newcommand{\textarrow}[2]{\xRightarrow{\substack{\text{#1} \\ \text{#2}}}}
+\renewcommand{\vec}[1]{\ensuremath{\mathbf{#1}}}
+
+\sisetup{exponent-product=*}
+\colorlet{darkgreen}{green!50!black}
+
+\DeclareSIUnit{\year}{yr}
+\DeclareSIUnit{\curie}{Ci}
+\DeclareSIUnit{\calorie}{cal}
+\DeclareSIUnit{\atom}{atom}
+\DeclareSIUnit{\df}{\SIUnitSymbolDegree F}
+\DeclareSIUnit{\btu}{BTU}
+\DeclareSIUnit{\lbm}{lbm}
+\DeclareSIUnit{\inch}{in}
+\DeclareSIUnit{\atom}{atoms}
+\DeclareSIUnit{\barn}{b}
+
+\newcommand{\textover}[3][c]{%
+  % #1 is the alignment, default c
+  % #2 is the text to be printed
+  % #3 is the text for setting the width
+  \makebox[\widthof{#3}][#1]{#2}%
+}
+
+\newcommand{\myuline}[1]{%
+  \uline{\phantom{#1}}%
+  \llap{\contour{white}{#1}}%
+}
+
+\begin{document}
+\section{Implementation}
+The code for this assignment is attached in appendix. It is 
+split into seven regions, marked with \texttt{\#region 
+\(\dots\) \#endregion} statements. A description of each 
+region follows. \begin{description}
+  \item [Input] Parses the given input file for the required parameters.
+
+  \item [Mesh Balance Equations] Sets up four vectors, \(a\) through \(d\), with the following contents, where \(i\) is the mesh index.
+    \begin{align*}
+      a_i &= -\tilde D_{i - 1} \\
+      b_i &= \Sigma_{a, i} \md{h} - a_i - c_i \\
+      c_i &= -\tilde D_i \\
+      d_i &= \nu \Sigma_{f, i} \md{h}
+      \intertext{where,}
+      \tilde D_i &= \frac{1}{\frac{\md{h}}{2 D_i} + \frac{\md{h}}{2 D_{i + 1}}}
+    \end{align*}
+  
+  \item [LU Factorization] Splits the transformation matrix \(M\) into \(L\) and \(U\) by creating vectors \(\tilde a\) and \(\tilde b\) as follows.
+    Also prepares \(\psi = \lambda F \phi\), the fission source in each mesh region.
+    \begin{align*}
+      \tilde a &= \frac{a_i}{\tilde b_{i - 1}} \\
+      \tilde b &= b_i - \tilde a_i c_{i - 1}
+      \intertext{The matricies are defined as,}
+      L &= \begin{bmatrix}
+        1 & 0 & 0 & 0 & 0 \\
+        \tilde a_2 & 1 & \ddots & \ddots & 0 \\
+        0 & \ddots & \ddots & \ddots & 0 \\
+        0 & \ddots & \ddots & \ddots & 0 \\
+        0 & 0 & 0 & \tilde a_N & 1
+      \end{bmatrix} \\
+      U &= \begin{bmatrix}
+        \tilde b_1 & c_1 & 0 & 0 & 0 \\
+        0 & \tilde b_2 & \ddots & \ddots & 0 \\
+        0 & \ddots & \ddots & \ddots & 0 \\
+        0 & \ddots & \ddots & \ddots & c_{N - 1} \\
+        0 & 0 & 0 & 0 & \tilde b_N
+      \end{bmatrix}
+    \end{align*}
+  
+  \item [Forward Elimination] Obtains a temporary vector \(y\) by solving \(L y = \psi\) through forward elimination.
+  
+  \item [Backward Substitution] Obtains the flux by solving \(U \phi = y\) by backward substitution.
+  
+  \item [Outer Iteration] Checks for convergence in the flux \(\phi\) and eigenvalue \(\lambda\) and loops if needed.
+  
+  \item [Output] Normalizes flux and fission source and prints them to a file.
+\end{description}
+
+\section{Results}
+We are told to solve find the flux and fission source given 
+the following input file. This input specifies a \SI{180}{\centi\meter}
+problem domain with nine regions and five meshes per region.
+There are four possible composition each region can take,
+and their mappings are provided on Line~10. Tolerance for 
+\(k\) is \num{e-6}, while that of flux is \num{e-5}. We use 
+the infinity norm -- that is, the maximum absolute difference 
+among the elements of the vector -- for the latter. Results 
+are plotted below.
+
+\lstinputlisting{../input.txt}
+
+The resulting eigenvalue is \(k = 0.87309\), with a dominance
+ratio \(\sigma = 0.96754\). This solution took 175 iterations
+to converge.
+
+\begin{center}
+  \begin{tikzpicture}[
+    trim axis left,
+    trim axis right,
+  ]
+    \begin{axis}[
+      xlabel={\(x\) {[\si{\centi\meter}]}},
+      ylabel={Normalized Value},
+      legend pos={outer north east},
+      legend cell align={left}
+    ]
+      \addplot[mark=none,const plot,solid] table {../phi.txt};
+      \addplot[mark=none,const plot,dotted] table {../source.txt};
+
+      \addlegendentry{Flux}
+      \addlegendentry{Fission Source}
+    \end{axis}
+  \end{tikzpicture}
+\end{center}
+
+\newpage \appendix 
+\section{Source Code}
+The full source code for both the solver and this report is 
+available at \url{https://github.com/mittsq/ners-561-hw9}; 
+I made sure to make the repository public this time. The 
+important parts of the code are included below.
+
+\lstinputlisting[language={[Sharp]C}]{../code/Program.cs}
+\end{document}
