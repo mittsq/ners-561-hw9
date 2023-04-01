@@ -1,5 +1,9 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
 
+// Wielandt Shift Skip Value
+//    set to `int.MaxValue` to disable
+const int SKIP = 2;
+
 #region Inputs
 var input = File.ReadAllLines(@"G:\My Drive\WN23\561 Core Des\HW\9\input-360.txt");
 
@@ -44,6 +48,7 @@ var dTildeBounds = (int i, Boundary a) => 1 / (dh / (2 * getParam(i).d) + 1 / al
 // *** //
 
 var phi = Vector<double>.Build.DenseOfEnumerable(Enumerable.Repeat(1d, n));
+var shift = 0d;
 var lambda = 1d;
 
 #region Mesh Balance Equations
@@ -87,19 +92,25 @@ var error = 1d;
 
 #region Outer Iteration
 for (var l = 0; ; ++l) {
+  // perform wielandt shift
+  lambda -= shift;
 
   #region LU Factorization
   var aTilde = new double[n];
   var bTilde = new double[n];
 
-  bTilde[0] = b[0];
+  for (var s = 0; s < n; ++s) {
+    bTilde[s] = -shift * d[s];
+  }
+
+  bTilde[0] += b[0];
 
   for (var i = 1; i < n; ++i) {
     aTilde[i] = a[i] / bTilde[i - 1];
-    bTilde[i] = b[i] - aTilde[i] * c[i - 1];
+    bTilde[i] += b[i] - aTilde[i] * c[i - 1];
   }
   
-  var psi = (lambda * (bigF * phi));
+  var psi = lambda * (bigF * phi);
   #endregion
 
   #region Forward Elimination
@@ -136,7 +147,7 @@ for (var l = 0; ; ++l) {
   var converged = kDiff < kConverge && infNorm < fConverge;
   var ratio = infNorm / error;
 
-  Console.WriteLine($"{kDiff,10:F8}\t{infNorm,10:F8}\t{ratio,10:F8}");
+  Console.WriteLine($"{kDiff,10:F8}\t{infNorm,10:F8}\t{ratio,10:F8}\t{shift,10:F8}");
   
   if (converged) {
     #region Output
@@ -147,16 +158,22 @@ for (var l = 0; ; ++l) {
     var phiNorm = newPhi.Sum();
     var phiString = newPhi.Aggregate("", (a, b) => a + $"{dh * i++}\t{b / phiNorm:F6}\n");
     phiString += $"{dh * i}\t{0:F6}\n";
-    File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\phi-{h}.txt", phiString);
+    File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\phi-{h}-{SKIP}.txt", phiString);
 
     i = 0;
     var sourceNorm = d.Sum();
     var sourceString = d.Aggregate("", (a, b) => a + $"{dh * i++}\t{b / sourceNorm:F6}\n");
     sourceString += $"{dh * i}\t{0:F6}\n";
-    File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\source-{h}.txt", sourceString);
+    File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\source-{h}-{SKIP}.txt", sourceString);
     #endregion
 
     break;
+  }
+
+  if (l < SKIP) {
+    shift = 0;
+  } else {
+    shift += newLambda - 1e4;
   }
 
   lambda = newLambda;
