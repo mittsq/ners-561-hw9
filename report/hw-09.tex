@@ -175,7 +175,15 @@ are plotted below.
 
 The resulting eigenvalue is \(k = 0.87309\), with a dominance
 ratio \(\sigma = 0.96754\). This solution took 175 iterations
-to converge.
+to converge. In general, we see an expected shape of the 
+flux distribution. Local maxima and minima correspond to 
+regions of increased and decreased diffusion and fission 
+cross section, respectively. Region Six, from 
+\SIrange{100}{120}{\centi\meter}, has as lower average 
+magnitude than that of Region Four, from 
+\SIrange{60}{80}{\centi\meter}, matching the input file. 
+This is most likely due to the decreased fission cross 
+section.
 
 \begin{center}
   \begin{tikzpicture}[
@@ -203,7 +211,10 @@ We first rerun the program unchanged, doubling the domain
 size to \SI{360}{\centi\meter}. In this case, the eigenvalue
 is \(k = 0.93582\) and the dominance ratio is \(\sigma = 
 0.99650\). This time, the solution took 1790 iterations to 
-converge, an order of magnitude increase.
+converge, an order of magnitude increase. The effects of 
+the lower fission cross section in Region Six (this time 
+from \SIrange{200}{240}{\centi\meter}) are magnified
+in this larger domain.
 
 \begin{center}
   \begin{tikzpicture}[

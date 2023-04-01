@@ -146,13 +146,13 @@ for (var l = 0; ; ++l) {
     var i = 0;
     var phiNorm = newPhi.Sum();
     var phiString = newPhi.Aggregate("", (a, b) => a + $"{dh * i++}\t{b / phiNorm:F6}\n");
-    phiString += $"{dh * i}\t0\n";
+    phiString += $"{dh * i}\t{0:F6}\n";
     File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\phi-{h}.txt", phiString);
 
     i = 0;
     var sourceNorm = d.Sum();
     var sourceString = d.Aggregate("", (a, b) => a + $"{dh * i++}\t{b / sourceNorm:F6}\n");
-    sourceString += $"{dh * i}\t0\n";
+    sourceString += $"{dh * i}\t{0:F6}\n";
     File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\source-{h}.txt", sourceString);
     #endregion
 
