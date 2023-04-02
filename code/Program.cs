@@ -145,7 +145,7 @@ for (var l = 0; ; ++l) {
   var newShift = 0d;
   if (l >= SKIP) {
     newShift = shift + 1 / newKTilde - EPSILON;
-    newShift = Math.Min(newShift, 1 - EPSILON);
+    newShift = Math.Min(newShift, 1 - EPSILON); // don't shift too much
   }
 
   var kDiff = Math.Abs(newK - k);
@@ -162,6 +162,7 @@ for (var l = 0; ; ++l) {
   Console.WriteLine();
 
   if (double.IsNaN(kDiff)) {
+    // in case something goes wrong
     break;
   }
 
@@ -180,12 +181,14 @@ for (var l = 0; ; ++l) {
 
     i = -m;
     var fineSource = newPhi * bigF;
+    // this object query averages the fine mesh source to obtain region-wise source
     var source = fineSource
       .Select((a, b) => new { Index = b, Value = a })
       .GroupBy(a => a.Index / m)
       .Select(g => g.Average(_ => _.Value));
-    var sourceNorm = source.Sum();
-    var sourceString = source.Aggregate("", (a, b) => a + $"{dh * (i += m)}\t{b / sourceNorm / m:F6}\n");
+    var sourceNorm = source.Sum() / m;
+    var sourceString = source
+      .Aggregate("", (a, b) => a + $"{dh * (i += m)}\t{b / sourceNorm:F6}\n");
     sourceString += $"{dh * i}\t{0:F6}\n";
     File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\source-{h}-{x}.txt", sourceString);
     #endregion
@@ -193,6 +196,7 @@ for (var l = 0; ; ++l) {
     break;
   }
 
+  // save k1 and k2 for the dominance ratio
   if (SKIP < int.MaxValue) {
     if (l == SKIP - 1) {
       dom = infNorm;
