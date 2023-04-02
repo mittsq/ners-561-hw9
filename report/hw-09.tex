@@ -164,7 +164,7 @@ region follows. \begin{description}
 We are told to solve find the flux and fission source given 
 the following input file. This input specifies a \SI{180}{\centi\meter}
 problem domain with nine regions and five meshes per region.
-There are four possible composition each region can take,
+There are four possible compositions each region can take,
 and their mappings are provided on Line~10. Tolerance for 
 \(k\) is \num{e-6}, while that of flux is \num{e-5}. We use 
 the infinity norm -- that is, the maximum absolute difference 
@@ -212,7 +212,7 @@ section.
 We first rerun the program unchanged, doubling the domain 
 size to \SI{360}{\centi\meter}. In this case, the eigenvalue
 is \(k = 0.93583\) and the dominance ratio is \(\sigma = 
-0.64411\). This time, the solution took 1790 iterations to 
+0.85371\). This time, the solution took 1790 iterations to 
 converge, an order of magnitude increase. The effects of 
 the lower fission cross section in Region Six (this time 
 from \SIrange{200}{240}{\centi\meter}) are magnified
@@ -249,7 +249,8 @@ The table below summarizes convergence times for a few of
 these skip values.
 Note that we are not modifying the problem itself, just the 
 convergence time. So, the solution (flux, fission source, 
-and eigenvalue) is all identical for all the shift values.
+and eigenvalue) is all identical for all the shift values,
+with some small variations within margin of error.
 
 \begin{center}
   \begin{tabular}{c S[table-format=1.5] c}
@@ -258,7 +259,7 @@ and eigenvalue) is all identical for all the shift values.
     2 & 0.64411 & 278 \\
     5 & 0.67474 & 278 \\
     10 & 0.85231 & 282 \\
-    \(\infty\) (no shift) & 0.93583 & 1790 \\ \bottomrule
+    \(\infty\) (no shift) & 0.85371 & 1790 \\ \bottomrule
   \end{tabular}
 \end{center}
 

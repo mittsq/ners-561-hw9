@@ -2,7 +2,7 @@
 
 // Wielandt Shift Skip Value
 //    set to `int.MaxValue` to disable
-const int SKIP = 10; // int.MaxValue;
+const int SKIP = int.MaxValue; // int.MaxValue;
 const double EPSILON = 0.05;
 
 #region Inputs
@@ -186,7 +186,7 @@ for (var l = 0; ; ++l) {
       .Select((a, b) => new { Index = b, Value = a })
       .GroupBy(a => a.Index / m)
       .Select(g => g.Average(_ => _.Value));
-    var sourceNorm = source.Sum() / m;
+    var sourceNorm = source.Sum() * m;
     var sourceString = source
       .Aggregate("", (a, b) => a + $"{dh * (i += m)}\t{b / sourceNorm:F6}\n");
     sourceString += $"{dh * i}\t{0:F6}\n";
