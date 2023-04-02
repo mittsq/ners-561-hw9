@@ -2,8 +2,8 @@
 
 // Wielandt Shift Skip Value
 //    set to `int.MaxValue` to disable
-const int SKIP = 2;
-const double EPSILON = 1e-5;
+const int SKIP = 10; // int.MaxValue;
+const double EPSILON = 0.05;
 
 #region Inputs
 var input = File.ReadAllLines(@"G:\My Drive\WN23\561 Core Des\HW\9\input-360.txt");
@@ -91,6 +91,9 @@ for (var i = 0; i < n; ++i) {
 var bigF = Matrix<double>.Build.SparseOfDiagonalArray(d);
 var error = 1d;
 
+var dom = 1d;
+var newDom = 1d;
+
 #region Outer Iteration
 for (var l = 0; ; ++l) {
   // perform wielandt shift
@@ -107,7 +110,7 @@ for (var l = 0; ; ++l) {
     aTilde[i] = a[i] / bTilde[i - 1];
     bTilde[i] = bShift(i) - aTilde[i] * c[i - 1];
   }
-  
+
   var psi = (1 / kTilde) * (bigF * phi);
   #endregion
 
@@ -135,7 +138,6 @@ for (var l = 0; ; ++l) {
   }
   #endregion
 
-  var source = bigF * newPhi;
   var gamma = newPhi.DotProduct(phi) / newPhi.DotProduct(newPhi);
   var newK = 1 / (gamma / k + shift * (1 - gamma));
   var newKTilde = kTilde / gamma;
@@ -162,26 +164,49 @@ for (var l = 0; ; ++l) {
   if (double.IsNaN(kDiff)) {
     break;
   }
-  
+
   if (converged) {
     #region Output
     Console.WriteLine($"\nConverged after {l} iterations.");
-    Console.WriteLine($"k = {newK:f5}, dominance = {ratio:f8}");
+    Console.WriteLine($"k = {newK:f5}, dominance = {newDom / dom:f8}");
+
+    var x = SKIP == int.MaxValue ? "noshift" : $"{SKIP}";
 
     var i = 0;
     var phiNorm = newPhi.Sum();
     var phiString = newPhi.Aggregate("", (a, b) => a + $"{dh * i++}\t{b / phiNorm:F6}\n");
     phiString += $"{dh * i}\t{0:F6}\n";
-    File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\phi-{h}-{SKIP}.txt", phiString);
+    File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\phi-{h}-{x}.txt", phiString);
 
-    i = 0;
-    var sourceNorm = d.Sum();
-    var sourceString = d.Aggregate("", (a, b) => a + $"{dh * i++}\t{b / sourceNorm:F6}\n");
+    i = -m;
+    var fineSource = newPhi * bigF;
+    var source = fineSource
+      .Select((a, b) => new { Index = b, Value = a })
+      .GroupBy(a => a.Index / m)
+      .Select(g => g.Average(_ => _.Value));
+    var sourceNorm = source.Sum();
+    var sourceString = source.Aggregate("", (a, b) => a + $"{dh * (i += m)}\t{b / sourceNorm / m:F6}\n");
     sourceString += $"{dh * i}\t{0:F6}\n";
-    File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\source-{h}-{SKIP}.txt", sourceString);
+    File.WriteAllText(@$"G:\My Drive\WN23\561 Core Des\HW\9\source-{h}-{x}.txt", sourceString);
     #endregion
 
     break;
+  }
+
+  if (SKIP < int.MaxValue) {
+    if (l == SKIP - 1) {
+      dom = infNorm;
+    }
+    if (l == SKIP) {
+      newDom = infNorm;
+    }
+  } else {
+    if (l == 0) {
+      dom = infNorm;
+    }
+    if (l == 1) {
+      newDom = infNorm;
+    }
   }
 
   k = newK;
