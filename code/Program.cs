@@ -2,7 +2,7 @@
 
 // Wielandt Shift Skip Value
 //    set to `int.MaxValue` to disable
-const int SKIP = 2;
+const int SKIP = int.MaxValue;
 
 #region Inputs
 var input = File.ReadAllLines(@"G:\My Drive\WN23\561 Core Des\HW\9\input-360.txt");
@@ -12,9 +12,9 @@ var h = double.Parse(input[0]);
 var split = input[1].Split(' ', StringSplitOptions.RemoveEmptyEntries);
 var alpha = split.Select(double.Parse).ToArray();
 
-var k = int.Parse(input[2]);
+var r = int.Parse(input[2]);
 var m = int.Parse(input[3]);
-var n = k * m;
+var n = r * m;
 var dh = h / n;
 
 var ncomp = int.Parse(input[4]);
@@ -28,9 +28,9 @@ for (var i = 0; i < ncomp; ++i) {
   };
 }
 
-var assignments = new int[k];
+var assignments = new int[r];
 split = input[5 + ncomp].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-for (var i = 0; i < k; ++i) {
+for (var i = 0; i < r; ++i) {
   assignments[i] = int.Parse(split[i]) - 1;
 }
 
@@ -49,7 +49,7 @@ var dTildeBounds = (int i, Boundary a) => 1 / (dh / (2 * getParam(i).d) + 1 / al
 
 var phi = Vector<double>.Build.DenseOfEnumerable(Enumerable.Repeat(1d, n));
 var shift = 0d;
-var lambda = 1d;
+var k = 1d;
 
 #region Mesh Balance Equations
 var a = new double[n];
@@ -93,24 +93,22 @@ var error = 1d;
 #region Outer Iteration
 for (var l = 0; ; ++l) {
   // perform wielandt shift
-  lambda -= shift;
+  var kTilde = 1 / (1 / k - shift);
+  
+  var bShift = (int i) => b[i] - shift * d[i];
 
   #region LU Factorization
   var aTilde = new double[n];
   var bTilde = new double[n];
 
-  for (var s = 0; s < n; ++s) {
-    bTilde[s] = -shift * d[s];
-  }
-
-  bTilde[0] += b[0];
+  bTilde[0] = bShift(0);
 
   for (var i = 1; i < n; ++i) {
     aTilde[i] = a[i] / bTilde[i - 1];
-    bTilde[i] += b[i] - aTilde[i] * c[i - 1];
+    bTilde[i] = bShift(i) - aTilde[i] * c[i - 1];
   }
   
-  var psi = lambda * (bigF * phi);
+  var psi = (1 / kTilde) * (bigF * phi);
   #endregion
 
   #region Forward Elimination
@@ -137,17 +135,32 @@ for (var l = 0; ; ++l) {
   }
   #endregion
 
-  var newLambda = lambda * newPhi.DotProduct(phi) / newPhi.DotProduct(newPhi);
-  var oldK = 1 / lambda;
-  var newK = 1 / newLambda;
+  var source = bigF * newPhi;
+  var gamma = newPhi.DotProduct(phi) / newPhi.DotProduct(newPhi);
+  var newK = 1 / (gamma / k + shift * (1 - gamma));
+  var newKTilde = kTilde / gamma;
 
-  var kDiff = Math.Abs(newK - oldK);
+  var newShift = 0d;
+  if (l >= SKIP) {
+    newShift = shift + 1 / newKTilde - 1e-5;
+  }
+
+  var kDiff = Math.Abs(newK - k);
   var infNorm = newPhi.Zip(phi, (a, b) => Math.Abs(a - b)).Max();
 
   var converged = kDiff < kConverge && infNorm < fConverge;
   var ratio = infNorm / error;
 
-  Console.WriteLine($"{kDiff,10:F8}\t{infNorm,10:F8}\t{ratio,10:F8}\t{shift,10:F8}");
+  Console.WriteLine($"delta k   = {kDiff,10:F6}");
+  Console.WriteLine($"infNorm   = {infNorm,10:F6}");
+  Console.WriteLine($"ratio     = {ratio,10:F6}");
+  Console.WriteLine($"k         = {newK,10:F6}");
+  Console.WriteLine($"shift     = {newShift,10:F6}");
+  Console.WriteLine();
+
+  if (double.IsNaN(kDiff)) {
+    break;
+  }
   
   if (converged) {
     #region Output
@@ -170,14 +183,9 @@ for (var l = 0; ; ++l) {
     break;
   }
 
-  if (l < SKIP) {
-    shift = 0;
-  } else {
-    shift += newLambda - 1e4;
-  }
-
-  lambda = newLambda;
+  k = newK;
   phi = newPhi;
   error = infNorm;
+  shift = newShift;
 }
 #endregion

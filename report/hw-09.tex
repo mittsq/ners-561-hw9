@@ -240,7 +240,21 @@ in this larger domain.
 \end{center}
 
 \subsection{Shift Implementation}
+By offsetting the eigenvalue by a certain amount, we can 
+achieve faster convergence. This offset is defined as 
+\(\lambda_s\), where \(\tilde \lambda = \lambda - \lambda_s\).
+We apply this shift after some arbitrary number of iterations.
+The table below summarizes convergence times for a few of 
+these skip values.
 
+\begin{center}
+  \begin{tabular}{c S[table-format=4.0]}
+    \toprule
+    \textbf{Skipped Iterations} & \textbf{Convergence Time} \\ \midrule
+    2 & 1558 \\
+    \(\infty\) (no shift) & 1790 \\ \bottomrule
+  \end{tabular}
+\end{center}
 
 \newpage \appendix 
 \section{Source Code}
