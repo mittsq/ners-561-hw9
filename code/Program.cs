@@ -2,7 +2,8 @@
 
 // Wielandt Shift Skip Value
 //    set to `int.MaxValue` to disable
-const int SKIP = int.MaxValue;
+const int SKIP = 2;
+const double EPSILON = 1e-5;
 
 #region Inputs
 var input = File.ReadAllLines(@"G:\My Drive\WN23\561 Core Des\HW\9\input-360.txt");
@@ -94,7 +95,6 @@ var error = 1d;
 for (var l = 0; ; ++l) {
   // perform wielandt shift
   var kTilde = 1 / (1 / k - shift);
-  
   var bShift = (int i) => b[i] - shift * d[i];
 
   #region LU Factorization
@@ -142,7 +142,8 @@ for (var l = 0; ; ++l) {
 
   var newShift = 0d;
   if (l >= SKIP) {
-    newShift = shift + 1 / newKTilde - 1e-5;
+    newShift = shift + 1 / newKTilde - EPSILON;
+    newShift = Math.Min(newShift, 1 - EPSILON);
   }
 
   var kDiff = Math.Abs(newK - k);
